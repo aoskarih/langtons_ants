@@ -4,6 +4,7 @@ import time
 import datetime
 import random
 import sys
+import os
 
 palette = { 0 : (0, 0, 0),
             1 : (126, 37, 83),
@@ -25,7 +26,8 @@ palette = { 0 : (0, 0, 0),
 
 palette_values = [v for k, v in palette.items()]
 
-screen_size = (1000, 1000)
+screen_size = (512, 512)
+fullscreen = True
 
 turn = {"left"  : np.array([[0, -1], [1, 0]]),
         "right" : np.array([[0, 1], [-1, 0]]),
@@ -47,9 +49,14 @@ lrllllrr
 lrrrrrllr
 llrrrlrlrllr    
 rrlllrlllrrr    !!
+rrlllrlllrrrlr
+rrlllrlllrrrrr
 rnbrnlllnn
 
 two ants:
+rrlllrlllrrrrr
+rrlllrlllrrrrrl
+
 rrlllrlllrrr  
     a = Ant(np.array([60, 0]), np.array([1, 0]), beh)
     b = Ant(np.array([-60, 0]), np.array([-1, 0]), beh)
@@ -86,6 +93,7 @@ color_n = 2
 ant_n = 1
 args = sys.argv[1:]
 beh_s = ""
+scale = 1
 for arg in [a.split("=") for a in args]:
     if arg[0] == "beh":
         beh_s = arg[1]
@@ -93,16 +101,22 @@ for arg in [a.split("=") for a in args]:
         color_n = int(arg[1])
     elif arg[0] == "ant_n":
         ant_n = int(arg[1])
+    elif arg[0] == "scale":
+        scale = int(arg[1])
     
 if len(beh_s) > 0:
     color_n = len(beh_s)
 
-zoom = 4
-center = [0, 0]
+center = [256, 256]
+speed = 50
+limits = [1, 5, 25, 100, 500, 0]
 ants = []
+surfs = {(0, 0) : pygame.Surface((128, 128))}
+d = 128
 
 pause = False
 speed_lim = 0
+
 
 
 beh = {}
@@ -123,7 +137,10 @@ keys = {0 : Key("pause", pygame.K_p),
         7 : Key("quit", pygame.K_ESCAPE),
         8 : Key("max speed", pygame.K_t),
         9 : Key("slow speed", pygame.K_g),
-        10: Key("Restart", pygame.K_r)
+        10: Key("restart", pygame.K_r),
+        11: Key("scroll up", pygame.K_q),
+        12: Key("scroll down", pygame.K_e),
+        13: Key("save", pygame.K_c)
         }
 
 input_arr = [False for k in range(len(keys))]
@@ -147,6 +164,7 @@ class Grid:
         c = Cell(r)
         self.grid[c] = (self.grid.get(c, 0) + 1) % (color_n)
         self.new_items[c] = self.grid[c]
+
 
 class Ant:
     
@@ -180,9 +198,11 @@ def update(g, cycle):
     screen = pygame.display.get_surface()
     update_rects = []
     
-    global zoom
+    global scale
     global center
     global pause
+    global speed
+    global d
     
     full_update = False
     draw_all = False
@@ -192,52 +212,59 @@ def update(g, cycle):
     for i in range(len(input_arr)):
         if input_arr[i]:
             if i == 0: pause = (pause == False)
-            if i == 1: 
-                zoom += 2
-                draw_all = True
-            if i == 2 and zoom > 2: 
-                zoom -= 2
-                draw_all = True
             if i == 3: 
-                center[1] += 200
-                draw_all = True
+                center[1] += speed
+                full_update = True
             if i == 4: 
-                center[1] -= 200
-                draw_all = True
+                center[1] -= speed
+                full_update = True
             if i == 5: 
-                center[0] += 200
-                draw_all = True
+                center[0] += speed
+                full_update = True
             if i == 6: 
-                center[0] -= 200
-                draw_all = True
-    
+                center[0] -= speed
+                full_update = True
+            if i == 11:
+                speed *= 2
+            if i == 12:
+                speed *= 0.5
+
     if pause: return 0
     
+    
     for ant in ants:
-        r = [ant.r[0]*zoom+screen_size[0]/2+center[0], ant.r[1]*zoom+screen_size[1]/2+center[1]]
-        lt = (r[0]-zoom/2, r[1]-zoom/2)
-        re = pygame.Rect(lt, (zoom, zoom))
+        lt = (ant.r[0]*scale+center[0], ant.r[1]*scale+center[1])
+        re = pygame.Rect(lt, (scale, scale))
         update_rects.append(re)
         ant.move(g)
-        
-    if draw_all:
+    
+    if full_update:
         background = pygame.Surface(screen.get_size()).convert()
         background.fill(palette[0])
         screen.blit(background, (0,0))
-        for c, v in g.grid.items():
-            r = [c.r[0]*zoom+screen_size[0]/2+center[0], c.r[1]*zoom+screen_size[1]/2+center[1]]
-            lt = (r[0]-zoom/2, r[1]-zoom/2)
-            pygame.draw.rect(screen, palette[v], pygame.Rect(lt,(zoom,zoom)))
-        full_update = True
-    else:
-        for c, v in g.new_items.items():
-            r = [c.r[0]*zoom+screen_size[0]/2+center[0], c.r[1]*zoom+screen_size[1]/2+center[1]]
-            lt = (r[0]-zoom/2, r[1]-zoom/2)
-            pygame.draw.rect(screen, palette[v], pygame.Rect(lt,(zoom,zoom)))
     
+
+    for c, v in g.new_items.items():
+        p = ((c.r[0]*scale)//d, (c.r[1]*scale)//d)  
+        if p in surfs:
+            s = surfs[p]
+        else:
+            s = pygame.Surface((d, d))
+            surfs[p] = s
+        lt = (c.r[0]*scale-d*p[0], c.r[1]*scale-d*p[1])
+        if scale == 1:
+            s.set_at(lt, palette[v])
+        else:
+            pygame.draw.rect(s, palette[v], pygame.Rect(lt, (scale, scale)))
+    
+    for r, s in surfs.items():
+        screen.blit(s, (d*r[0]+center[0], d*r[1]+center[1]))
+#    bl = [(s, (d*r[0]+center[0], d*r[1]+center[1])) for r, s in surfs.items()]
+#    screen.blits(bl)
+
     g.new_items.clear()
     
-    if full_update:
+    if full_update:        
         pygame.display.update()
     else:
         pygame.display.update(update_rects)
@@ -255,6 +282,7 @@ def main():
     
     clock = pygame.time.Clock()
     global speed_lim
+    s_i = 5
     
     if len(beh_s) > 0:
         for j, c in enumerate(beh_s):
@@ -277,13 +305,13 @@ def main():
         sv = random.choice([[0, -1],[-1, 0],[1, 0],[0, 1]])
         a = Ant(np.array(sr), np.array(sv), beh)
         ants.append(a)
-        print(a.to_str())
-    """
-    a = Ant(np.array([60, 0]), np.array([1, 0]), beh)
-    b = Ant(np.array([-60, 0]), np.array([-1, 0]), beh)
+        #print(a.to_str())
+    """    
+    a = Ant(np.array([-2, 9]), np.array([1, 0]), beh)
+    b = Ant(np.array([-7, -7]), np.array([0, -1]), beh)
     ants.append(a)
     ants.append(b)
-    """
+    """    
     g = Grid()
     
     cps = []
@@ -295,21 +323,26 @@ def main():
         t += dt
         cps.append(dt)
         
-        clock.tick(speed_lim)
+        clock.tick(limits[s_i])
         
         input()        
         for i in range(len(input_arr)):
             if input_arr[i]:
                 if i == 10: 
                     g.grid.clear()
+                    surfs.clear()
                     return 1
-                if i == 8 and speed_lim != 0: speed_lim = 0
-                if i == 9 and speed_lim == 0: speed_lim = 100
+                if i == 8 and s_i < 5: s_i += 1
+                if i == 9 and s_i > 0: s_i += -1
                 if i == 7: 
                     print("cycle:      " + str(cycle))
                     print("cycle/s:    " + str(int(cycle/time.clock())))
                     print("time spend: " + str(datetime.timedelta(seconds=int(time.clock()))))
                     return 0
+                if i == 13:
+                    file_name = beh_s + "_" + str(ant_n) + "_" + str(cycle) + ".png"
+                    pygame.image.save(pygame.display.get_surface(), os.path.join("data", file_name))
+                    print("saved: " + file_name)
         u = update(g, cycle)
         cycle += u
         
@@ -320,10 +353,11 @@ def main():
 
 if __name__ == "__main__":    
     pygame.init()
-    #pygame.display.set_mode(screen_size)
     pygame.display.set_caption("Langton's Ant")
-    pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    
+    if fullscreen:
+        pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    else:
+        pygame.display.set_mode(screen_size)
     
     while main():
         del ants[:]
