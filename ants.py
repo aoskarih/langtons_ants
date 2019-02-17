@@ -26,8 +26,8 @@ palette = { 0 : (0, 0, 0),
 
 palette_values = [v for k, v in palette.items()]
 
-screen_size = (512, 512)
-fullscreen = True
+screen_size = (1080, 720)
+fullscreen = False
 
 turn = {"left"  : np.array([[0, -1], [1, 0]]),
         "right" : np.array([[0, 1], [-1, 0]]),
@@ -56,6 +56,7 @@ rnbrnlllnn
 two ants:
 rrlllrlllrrrrr
 rrlllrlllrrrrrl
+rrlllrlllrrrrrr
 
 rrlllrlllrrr  
     a = Ant(np.array([60, 0]), np.array([1, 0]), beh)
@@ -103,11 +104,13 @@ for arg in [a.split("=") for a in args]:
         ant_n = int(arg[1])
     elif arg[0] == "scale":
         scale = int(arg[1])
+    elif arg[0] == "f":
+        fullscreen = int(arg[1])
     
 if len(beh_s) > 0:
     color_n = len(beh_s)
 
-center = [256, 256]
+center = [0, 0]
 speed = 50
 limits = [1, 5, 25, 100, 500, 0]
 ants = []
@@ -271,7 +274,7 @@ def update(g, cycle):
     
     return 1
 
-def main():
+def main(g):
     
     cycle = 0
     
@@ -282,7 +285,7 @@ def main():
     
     clock = pygame.time.Clock()
     global speed_lim
-    s_i = 5
+    s_i = 0
     
     if len(beh_s) > 0:
         for j, c in enumerate(beh_s):
@@ -298,8 +301,6 @@ def main():
         for i in range(color_n):
             beh[i] = random.choice(directions)
     
-    print([beh[k] for k in beh])
-
     for _ in range(ant_n):
         sr = [random.randint(-10, 10) for _ in range(2)]
         sv = random.choice([[0, -1],[-1, 0],[1, 0],[0, 1]])
@@ -312,16 +313,11 @@ def main():
     ants.append(a)
     ants.append(b)
     """    
-    g = Grid()
     
-    cps = []
     t = time.clock()
     run = True
     
     while run:
-        dt = time.clock() - t
-        t += dt
-        cps.append(dt)
         
         clock.tick(limits[s_i])
         
@@ -331,6 +327,10 @@ def main():
                 if i == 10: 
                     g.grid.clear()
                     surfs.clear()
+                    print("cycle:      " + str(cycle))
+                    print("cycle/s:    " + str(int(cycle/(time.clock()-t))))
+                    print("time spend: " + str(datetime.timedelta(seconds=int(time.clock()-t))))
+                    print()
                     return 1
                 if i == 8 and s_i < 5: s_i += 1
                 if i == 9 and s_i > 0: s_i += -1
@@ -345,11 +345,7 @@ def main():
                     print("saved: " + file_name)
         u = update(g, cycle)
         cycle += u
-        
-#        os.system("clear")
-#        print("cycle:      " + str(i))
-#        print("cycle/s:    " + str(int(1/(sum(cps)/10))))
-#        print("time spend: " + str(datetime.timedelta(seconds=int(time.clock()))))
+
 
 if __name__ == "__main__":    
     pygame.init()
@@ -359,7 +355,12 @@ if __name__ == "__main__":
     else:
         pygame.display.set_mode(screen_size)
     
-    while main():
+    center = np.array(pygame.display.get_surface().get_size())/2
+    g = Grid()
+    
+    while main(g):
         del ants[:]
+    
+    
     
     

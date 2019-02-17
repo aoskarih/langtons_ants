@@ -48,38 +48,6 @@ lrrrrrllr
 llrrrlrlrllr    
 rrlllrlllrrr    !!
 rnbrnlllnn
-
-two ants:
-rrlllrlllrrr  
-    a = Ant(np.array([60, 0]), np.array([1, 0]), beh)
-    b = Ant(np.array([-60, 0]), np.array([-1, 0]), beh)
-
-    a = Ant(np.array([100, 0]), np.array([1, 0]), beh)
-    b = Ant(np.array([-100, -50]), np.array([-1, 0]), beh)
-    
-    a = Ant(np.array([0, -7]), np.array([1, 0]), beh)
-    b = Ant(np.array([9, 8]), np.array([1, 0]), beh)
-    
-    !!!
-    a = Ant(np.array([-2, 9]), np.array([1, 0]), beh)
-    b = Ant(np.array([-7, -7]), np.array([0, -1]), beh)
-    
-    fast grid
-    a = Ant(np.array([2, 4]), np.array([1, 0]), beh)
-    b = Ant(np.array([6, 7]), np.array([1, 0]), beh)
-
-n ants:
-lr
-llrn
-rbbbn
-blbrln
-llrbbll
-rbnrllb
-rblnnbbbrr
-bnrnrnnnnl
-bllbnnbnbblbbr
-bbnbbrrlbbbnrr
-lblrrbnbllrnrr
 """
 
 color_n = 2
@@ -214,7 +182,7 @@ def update(g, cycle):
     if pause: return 0
     
     for ant in ants:
-        r = [ant.r[0]*zoom+screen_size[0]/2+center[0], ant.r[1]*zoom+screen_size[1]/2+center[1]]
+        r = [ant.r[0]*zoom+center[0], ant.r[1]*zoom+center[1]]
         lt = (r[0]-zoom/2, r[1]-zoom/2)
         re = pygame.Rect(lt, (zoom, zoom))
         update_rects.append(re)
@@ -225,13 +193,13 @@ def update(g, cycle):
         background.fill(palette[0])
         screen.blit(background, (0,0))
         for c, v in g.grid.items():
-            r = [c.r[0]*zoom+screen_size[0]/2+center[0], c.r[1]*zoom+screen_size[1]/2+center[1]]
+            r = [c.r[0]*zoom+center[0], c.r[1]*zoom+center[1]]
             lt = (r[0]-zoom/2, r[1]-zoom/2)
             pygame.draw.rect(screen, palette[v], pygame.Rect(lt,(zoom,zoom)))
         full_update = True
     else:
         for c, v in g.new_items.items():
-            r = [c.r[0]*zoom+screen_size[0]/2+center[0], c.r[1]*zoom+screen_size[1]/2+center[1]]
+            r = [c.r[0]*zoom+center[0], c.r[1]*zoom+center[1]]
             lt = (r[0]-zoom/2, r[1]-zoom/2)
             pygame.draw.rect(screen, palette[v], pygame.Rect(lt,(zoom,zoom)))
     
@@ -273,11 +241,8 @@ def main():
     print([beh[k] for k in beh])
 
     for _ in range(ant_n):
-        sr = [random.randint(-10, 10) for _ in range(2)]
-        sv = random.choice([[0, -1],[-1, 0],[1, 0],[0, 1]])
-        a = Ant(np.array(sr), np.array(sv), beh)
+        a = Ant(np.array([0, 0]), np.array([-1, 0]), beh)
         ants.append(a)
-        print(a.to_str())
     """
     a = Ant(np.array([60, 0]), np.array([1, 0]), beh)
     b = Ant(np.array([-60, 0]), np.array([-1, 0]), beh)
@@ -324,6 +289,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("Langton's Ant")
     pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     
+    center = np.array(pygame.display.get_surface().get_size())/2
     
     while main():
         del ants[:]
