@@ -93,7 +93,7 @@ lblrrbnbllrnrr
 color_n = 2
 ant_n = 1
 args = sys.argv[1:]
-beh_s = ""
+beh_s = "lr"
 scale = 1
 for arg in [a.split("=") for a in args]:
     if arg[0] == "beh":
@@ -288,18 +288,21 @@ def main(g):
     s_i = 0
     
     if len(beh_s) > 0:
+        print("not random: " + beh_s)
         for j, c in enumerate(beh_s):
             if c=="l":
-                beh[j] = directions[0]
+                beh[j] = "left"
             elif c=="r":
-                beh[j] = directions[1]
+                beh[j] = "right"
             elif c=="b":
-                beh[j] = directions[2]
+                beh[j] = "back"
             elif c=="n":
-                beh[j] = directions[3]
+                beh[j] = "none"
     else:
         for i in range(color_n):
             beh[i] = random.choice(directions)
+    
+    print([v for k, v in beh.items()])
     
     for _ in range(ant_n):
         sr = [random.randint(-10, 10) for _ in range(2)]
