@@ -311,8 +311,8 @@ def main(g):
         ants.append(a)
         #print(a.to_str())
     """    
-    a = Ant(np.array([-2, 9]), np.array([1, 0]), beh)
-    b = Ant(np.array([-7, -7]), np.array([0, -1]), beh)
+    a = Ant(np.array([2, 4]), np.array([1, 0]), beh)
+    b = Ant(np.array([6, 7]), np.array([1, 0]), beh)
     ants.append(a)
     ants.append(b)
     """    
